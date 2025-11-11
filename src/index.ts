@@ -1,6 +1,6 @@
 import { createInterface } from "readline/promises";
 import { stdin as input, stdout as output } from "node:process";
-import { Quiz, Question } from "./quiz";
+import { Quiz } from "./quiz";
 
 const rl = createInterface({ input, output });
 
@@ -88,34 +88,38 @@ async function playQuiz(quiz: Quiz) {
   console.log(`You got ${score} out of ${questions.length} correct.\n`);
 }
 
-async function main() {
-  console.log("Welcome to the Quiz App.\n");
+// Recursive main menu
+async function mainMenu(): Promise<void> {
+  const mode = (await ask("Type 'create' to make a quiz, 'play' to play one, 'list' to see all quizzes, or 'exit' to quit: ")).toLowerCase();
 
-  while (true) {
-    const mode = (await ask("Type 'create' to make a quiz, 'play' to play one, 'list' to see all quizzes, or 'exit' to quit: ")).toLowerCase();
-
-    if (mode === "create") {
-      await createQuiz();
-    } else if (mode === "play") {
-      const quiz = await chooseQuiz();
-      if (quiz) await playQuiz(quiz);
-    } else if (mode === "list") {
-      if (quizzes.length === 0) {
-        console.log("\nNo quizzes available.\n");
-      } else {
-        console.log("\nAvailable quizzes:");
-        quizzes.forEach((q, i) => console.log(`  ${i + 1}) ${q.name}`));
-        console.log("");
-      }
-    } else if (mode === "exit") {
-      console.log("\nGoodbye.");
-      break;
+  if (mode === "create") {
+    await createQuiz();
+  } else if (mode === "play") {
+    const quiz = await chooseQuiz();
+    if (quiz) await playQuiz(quiz);
+  } else if (mode === "list") {
+    if (quizzes.length === 0) {
+      console.log("\nNo quizzes available.\n");
     } else {
-      console.log("\nUnknown command. Please type 'create', 'play', 'list', or 'exit'.\n");
+      console.log("\nAvailable quizzes:");
+      quizzes.forEach((q, i) => console.log(`  ${i + 1}) ${q.name}`));
+      console.log("");
     }
+  } else if (mode === "exit") {
+    console.log("\nGoodbye.");
+    await rl.close();
+    return; // base case
+  } else {
+    console.log("\nUnknown command. Please type 'create', 'play', 'list', or 'exit'.\n");
   }
 
-  await rl.close();
+  // recursion step — return to the main menu
+  await mainMenu();
+}
+
+async function main() {
+  console.log("Welcome to the Quiz App.\n");
+  await mainMenu();
 }
 
 main();
