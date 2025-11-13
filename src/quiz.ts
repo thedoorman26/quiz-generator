@@ -1,16 +1,18 @@
 export interface Question {
-  question: string;
-  options: string[];
-  correctIndex: number;
+  question: string;     // question text
+  options: string[];    // answer choices
+  correctIndex: number; // correct option index
 }
 
 export class Quiz {
-  private questions: Question[] = [];
+  private questions: Question[] = []; // stored questions list
 
-  addQuestion(question: Question) {
-    this.questions.push(question);
+  // add one question to quiz
+  addQuestion(q: Question) {
+    this.questions.push(q);
   }
 
+  // retrieve all questions
   getQuestions(): Question[] {
     return this.questions;
   }
