@@ -9,164 +9,162 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const promises_1 = require("readline/promises");
-const node_process_1 = require("node:process");
-const quiz_1 = require("./quiz");
+const promises_1 = require("readline/promises"); // async console input
+const node_process_1 = require("node:process"); // IO streams
+const quiz_1 = require("./quiz"); // Quiz class
+// readline interface for asking questions
 const rl = (0, promises_1.createInterface)({ input: node_process_1.stdin, output: node_process_1.stdout });
+// in-memory list of quizzes
 const quizzes = [];
+// wrapper to ask a question + trim result
 function ask(question) {
     return __awaiter(this, void 0, void 0, function* () {
-        const answer = yield rl.question(question);
-        return answer.trim();
+        return (yield rl.question(question)).trim();
     });
 }
+// create a new quiz interactively
 function createQuiz() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log("\nLet's create a new quiz.");
             const name = yield ask("Enter a name for your quiz: ");
-            if (!name) {
-                console.log("Quiz name cannot be empty.\n");
+            // check for duplicate quiz names
+            if (quizzes.some(q => q.name === name)) {
+                console.log("A quiz with that name already exists.\n");
                 return;
             }
-            if (quizzes.find((q) => q.name.toLowerCase() === name.toLowerCase())) {
-                console.log("A quiz with that name already exists. Please choose another name.\n");
-                return;
-            }
-            const numStr = yield ask("How many questions? ");
-            const numQuestions = parseInt(numStr, 10);
+            const numQuestions = parseInt(yield ask("How many questions? "), 10);
             if (isNaN(numQuestions) || numQuestions <= 0) {
-                console.log("Please enter a valid number of questions.\n");
+                console.log("Invalid number.\n");
                 return;
             }
-            const quiz = new quiz_1.Quiz();
+            const quiz = new quiz_1.Quiz(); // create blank quiz
+            // ask user to enter each question
             for (let i = 0; i < numQuestions; i++) {
                 console.log(`\nQuestion ${i + 1}:`);
                 const questionText = yield ask("Enter the question: ");
-                if (!questionText) {
-                    console.log("Question text cannot be empty.");
-                    return;
-                }
+                // collect the 4 answer options
                 const options = [];
                 for (let j = 0; j < 4; j++) {
-                    const opt = yield ask(`Option ${j + 1}: `);
-                    options.push(opt || `(blank option ${j + 1})`);
+                    options.push(yield ask(`Option ${j + 1}: `)); // push options into array
                 }
-                const correctStr = yield ask("Enter the number of the correct option (1-4): ");
-                const correctIndex = parseInt(correctStr, 10) - 1;
-                if (isNaN(correctIndex) || correctIndex < 0 || correctIndex > 3) {
-                    console.log("Invalid answer number. Question skipped.\n");
-                    continue;
+                // get correct answer index
+                const correct = parseInt(yield ask("Correct option (1–4): "), 10) - 1;
+                // basic correct index validation
+                if (isNaN(correct) || correct < 0 || correct > 3) {
+                    console.log("Invalid correct option.\n");
+                    return;
                 }
-                quiz.addQuestion({ question: questionText, options, correctIndex });
+                // store question in quiz
+                quiz.addQuestion({
+                    question: questionText,
+                    options,
+                    correctIndex: correct
+                });
             }
+            // add completed quiz to global list
             quizzes.push({ name, quiz });
-            console.log(`\nQuiz '${name}' created successfully.\n`);
+            console.log(`\nQuiz '${name}' created.\n`);
         }
         catch (err) {
-            console.error("An error occurred while creating the quiz:", err);
+            console.error("Error creating quiz:", err);
         }
     });
 }
+// allow user to choose which quiz to play
 function chooseQuiz() {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            if (quizzes.length === 0) {
-                console.log("\nNo quizzes available. Please create one first.\n");
-                return null;
-            }
-            console.log("\nAvailable quizzes:");
-            quizzes.forEach((q, i) => console.log(`  ${i + 1}) ${q.name}`));
-            const choiceStr = yield ask("\nEnter the number of the quiz you want to play: ");
-            const choice = parseInt(choiceStr, 10);
-            if (isNaN(choice) || choice < 1 || choice > quizzes.length) {
-                console.log("Invalid choice.\n");
-                return null;
-            }
-            return quizzes[choice - 1].quiz;
-        }
-        catch (err) {
-            console.error("Error choosing quiz:", err);
+        if (quizzes.length === 0) {
+            console.log("No quizzes available.\n");
             return null;
         }
+        // list quiz names
+        quizzes.forEach((q, i) => {
+            console.log(`${i + 1}. ${q.name}`);
+        });
+        const choice = parseInt(yield ask("Choose a quiz by number: "), 10) - 1;
+        // validate index
+        if (choice < 0 || choice >= quizzes.length || isNaN(choice)) {
+            console.log("Invalid choice.\n");
+            return null;
+        }
+        // return selected quiz object
+        return quizzes[choice].quiz;
     });
 }
+// run through a quiz and score answers
 function playQuiz(quiz) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log("\nStarting the quiz.\n");
-            const questions = quiz.getQuestions();
-            if (questions.length === 0) {
-                console.log("This quiz has no questions.\n");
-                return;
-            }
-            let score = 0;
+            const questions = quiz.getQuestions(); // retrieve stored Qs
+            let score = 0; // track correct answers
             for (const [index, q] of questions.entries()) {
-                console.log(`${index + 1}. ${q.question}`);
+                console.log(`\n${index + 1}. ${q.question}`);
+                // print options
                 q.options.forEach((opt, i) => console.log(`  ${i + 1}) ${opt}`));
-                const answerStr = yield ask("Your answer: ");
-                const answer = parseInt(answerStr, 10) - 1;
-                if (isNaN(answer) || answer < 0 || answer >= q.options.length) {
-                    console.log("Invalid input. Skipping question.\n");
-                    continue;
-                }
+                const answer = parseInt(yield ask("Your answer: "), 10) - 1;
+                // check correctness
                 if (answer === q.correctIndex) {
                     console.log("Correct.\n");
                     score++;
                 }
                 else {
-                    console.log(`Incorrect. The correct answer is: ${q.options[q.correctIndex]}\n`);
+                    console.log(`Incorrect. Correct: ${q.options[q.correctIndex]}\n`);
                 }
             }
-            console.log(`You got ${score} out of ${questions.length} correct.\n`);
+            // final score summary
+            console.log(`Final score: ${score} / ${questions.length}\n`);
         }
         catch (err) {
-            console.error("Error while playing quiz:", err);
+            console.error("Error playing quiz:", err);
         }
     });
 }
+// main recursive menu loop
 function mainMenu() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const mode = (yield ask("Type 'create' to make a quiz, 'play' to play one, 'list' to see all quizzes, or 'exit' to quit: ")).toLowerCase();
-            if (mode === "create") {
-                yield createQuiz();
+            const input = (yield ask("Type 'create', 'play', 'list', or 'exit': ")).toLowerCase();
+            if (input === "create") {
+                yield createQuiz(); // build a quiz
             }
-            else if (mode === "play") {
-                const quiz = yield chooseQuiz();
+            else if (input === "play") {
+                const quiz = yield chooseQuiz(); // select one
                 if (quiz)
-                    yield playQuiz(quiz);
+                    yield playQuiz(quiz); // play selected quiz
             }
-            else if (mode === "list") {
+            else if (input === "list") {
+                // print all quiz names
                 if (quizzes.length === 0) {
-                    console.log("\nNo quizzes available.\n");
+                    console.log("No quizzes yet.\n");
                 }
                 else {
-                    console.log("\nAvailable quizzes:");
-                    quizzes.forEach((q, i) => console.log(`  ${i + 1}) ${q.name}`));
-                    console.log("");
+                    console.log("Available quizzes:");
+                    quizzes.forEach(q => console.log(`- ${q.name}`));
+                    console.log();
                 }
             }
-            else if (mode === "exit") {
-                console.log("\nGoodbye.");
-                yield rl.close();
-                return;
+            else if (input === "exit") {
+                console.log("Goodbye.");
+                rl.close(); // close readline interface
+                return; // stop recursion
             }
             else {
-                console.log("\nUnknown command. Please type 'create', 'play', 'list', or 'exit'.\n");
+                console.log("Unknown command.\n");
             }
-            yield mainMenu(); // recursive re-entry
+            // recursive call returns to main menu again
+            yield mainMenu();
         }
         catch (err) {
             console.error("Unexpected error:", err);
-            yield mainMenu(); // attempt to recover gracefully
+            yield mainMenu(); // recover by restarting menu
         }
     });
 }
+// program entry point
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("Welcome to the Quiz App.\n");
         yield mainMenu();
     });
 }
-main();
+main(); // start program

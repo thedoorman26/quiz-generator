@@ -24,7 +24,7 @@ Here are a couple of resources that I found helpful while making this project:
 
 # Future Work
 
-Some things I'd like to add in the future
+Some things I'd like to add in the future:
 
 - Quizzes with a different number of choices than 4
 - Free response quizzes
