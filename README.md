@@ -4,9 +4,9 @@ This is a TypeScript program that allows a user to create and play quizzes with 
 
 I created this program because I was familiar with JavaScript, but had never used TypeScript before, and I wanted to advance my skillset.
 
-Here's a link to a YouTube demonstration of the software.
+Here's a link to a YouTube demonstration of the software:
 
-[Software Demo Video](http://youtube.link.goes.here)
+[Software Demo Video](https://www.youtube.com/watch?v=_CUgo6mYejI)
 
 # Development Environment
 

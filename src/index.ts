@@ -50,7 +50,7 @@ async function createQuiz(): Promise<void> {
       }
 
       // get correct answer index
-      const correct = parseInt(await ask("Correct option (1–4): "), 10) - 1;
+      const correct = parseInt(await ask("Correct option (1-4): "), 10) - 1;
 
       // basic correct index validation
       if (isNaN(correct) || correct < 0 || correct > 3) {
